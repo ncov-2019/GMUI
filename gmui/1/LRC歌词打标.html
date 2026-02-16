@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LRC歌词制作工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e6e6e6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            color: #4cc9f0;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #9d4edd;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button,
+        input[type="file"]::file-selector-button {
+            background: linear-gradient(45deg, #4361ee, #3a0ca3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        button:hover,
+        input[type="file"]::file-selector-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.7;
+        }
+
+        .time-display {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            min-width: 120px;
+            text-align: center;
+            color: #4cc9f0;
+        }
+
+        .waveform-container {
+            position: relative;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            cursor: grab;
+        }
+
+        .waveform-container:active {
+            cursor: grabbing;
+        }
+
+        #waveform {
+            width: 100%;
+            height: 100%;
+            min-width: 100%;
+        }
+
+        .timeline {
+            display: flex;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+            background: #f72585;
+            pointer-events: none;
+        }
+
+        .lyrics-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .lyrics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .lyrics-header h2 {
+            color: #4cc9f0;
+            font-size: 1.4rem;
+        }
+
+        .lyrics-list {
+            position: relative;
+            max-height: 400px;
+            height: 400px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+        }
+
+        .lyric-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+
+        .lyric-item:hover {
+            background: rgba(60, 60, 60, 0.3);
+        }
+
+        .lyric-item.highlighted {
+            background: rgba(76, 201, 240, 0.2);
+            border-left: 4px solid #4cc9f0;
+        }
+
+        .lyric-time {
+            font-family: monospace;
+            color: #f72585;
+            min-width: 80px;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        .lyric-time:hover {
+            color: #4cc9f0;
+        }
+
+        .lyric-text {
+            flex: 1;
+        }
+
+        .lyric-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .lyric-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #9d4edd;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 5px;
+        }
+
+        .action-btn:hover {
+            color: #4cc9f0;
+        }
+
+        .keyframe {
+            position: absolute;
+            top: 5px;
+            width: 8px;
+            height: 30px;
+            background: #9d4edd;
+            border-radius: 2px;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .keyframe:hover,
+        .keyframe.highlighted {
+            background: #4cc9f0;
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #4cc9f0;
+            margin-bottom: 10px;
+        }
+
+        .hotkey {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0 3px;
+            color: #f72585;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>LRC歌词制作工具</h1>
+            <p class="subtitle">可视化波形 | 精准时间轴 | 一键导出LRC</p>
+        </header>
+        <div class="controls">
+            <input type="file" id="audioFile" accept="audio/*">
+            <button id="playBtn">播放/暂停 (空格)</button>
+            <button id="addKeyframeBtn" disabled>添加歌词 (Tab)</button>
+            <button id="exportBtn" disabled>导出LRC文件</button>
+            <div class="time-display" id="currentTime">00:00.00 / 00:00.00</div>
+        </div>
+        <div class="waveform-container" id="waveformContainer">
+            <div id="waveform"></div>
+        </div>
+        <div class="timeline" id="timeline">
+            <div class="timeline-marker" id="timelineMarker"></div>
+        </div>
+        <div class="lyrics-section">
+            <div class="lyrics-header">
+                <h2>歌词列表</h2>
+                <p>编辑歌词</p>
+            </div>
+            <div class="lyrics-list" id="lyricsList"></div>
+        </div>
+        <div class="instructions">
+            <h3>操作说明</h3>
+            <ul>
+                <li><span class="hotkey">空格</span>：播放/暂停</li>
+                <li><span class="hotkey">Tab</span>：在当前时间位置插入歌词</li>
+                <li>鼠标滚轮：在波形区域快速放大/缩小波形</li>
+                <li>点击波形/时间戳：跳转到对应播放位置</li>
+                <li>点击歌词项：编辑歌词内容</li>
+                <li>删除按钮：移除对应的歌词关键帧</li>
+            </ul>
+        </div>
+    </div>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+    <script>
+        let wavesurfer;
+        let isPlaying = false;
+        let currentTime = 0;
+        let duration = 0;
+        let lyrics = [];
+        let lyricIdCounter = 0;
+        let isInputFocused = false;
+        const BASE_ZOOM_LEVEL = 100;
+        let currentZoomLevel = BASE_ZOOM_LEVEL;
+        let currentHighlightedLyricId = null;
+        let isDraggingWaveform = false;
+        let dragStartX = 0;
+        let scrollLeftStart = 0;
+
+        const audioFileInput = document.getElementById('audioFile');
+        const playBtn = document.getElementById('playBtn');
+        const addKeyframeBtn = document.getElementById('addKeyframeBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const currentTimeDisplay = document.getElementById('currentTime');
+        const timeline = document.getElementById('timeline');
+        const timelineMarker = document.getElementById('timelineMarker');
+        const lyricsList = document.getElementById('lyricsList');
+        const waveformContainer = document.getElementById('waveformContainer');
+
+        function initWaveSurfer() {
+            if (wavesurfer) {
+                wavesurfer.destroy();
+            }
+
+            currentZoomLevel = 1;
+
+            wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: '#4361ee',
+                progressColor: '#4cc9f0',
+                cursorColor: '#f72585',
+                cursorWidth: 1,
+                barWidth: 1,
+                barRadius: 1,
+                responsive: true,
+                normalize: true,
+                interact: true,
+                dragToSeek: false,
+                autoCenter: false,
+                height: 200,
+                pixelRatio: window.devicePixelRatio || 1,
+                minPxPerSec: currentZoomLevel,
+                scrollParent: true
+            });
+
+            wavesurfer.on('ready', () => {
+                duration = wavesurfer.getDuration();
+                updateTimeDisplay();
+                addKeyframeBtn.disabled = false;
+                exportBtn.disabled = false;
+                initTimeline();
+                bindTimelineDrag();
+                bindWaveformDrag();
+                wavesurfer.on('click', (relativeX) => {
+                    if (!isDraggingWaveform) {
+                        const newTime = relativeX * duration;
+                        currentTime = Math.max(0, Math.min(duration, newTime));
+                        wavesurfer.seekTo(relativeX);
+                        updateTimelineMarker();
+                        updateTimeDisplay();
+                    }
+                });
+            });
+
+            wavesurfer.on('audioprocess', () => {
+                currentTime = wavesurfer.getCurrentTime();
+                updateTimelineMarker();
+                updateTimeDisplay();
+            });
+
+            wavesurfer.on('finish', () => {
+                isPlaying = false;
+                currentTime = 0;
+                wavesurfer.seekTo(0);
+                updateTimelineMarker();
+                updateTimeDisplay();
+            });
+            wavesurfer.on('play', () => isPlaying = true);
+            wavesurfer.on('pause', () => isPlaying = false);
+        }
+
+        function initTimeline() {
+            document.querySelectorAll('.keyframe').forEach(el => el.remove());
+
+            lyrics.forEach(lyric => {
+                addKeyframeToTimeline(lyric.time, lyric.id);
+            });
+        }
+
+        function addKeyframeToTimeline(time, id) {
+            const keyframe = document.createElement('div');
+            keyframe.className = 'keyframe';
+            keyframe.dataset.id = id;
+            keyframe.dataset.time = time;
+
+            const position = (time / duration) * 100;
+            keyframe.style.left = `${position}%`;
+
+            keyframe.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const targetTime = parseFloat(keyframe.dataset.time);
+                wavesurfer.seekTo(targetTime / duration);
+                currentTime = targetTime;
+                updateTimelineMarker();
+                updateTimeDisplay();
+                highlightLyricItem(keyframe.dataset.id);
+            });
+            timeline.appendChild(keyframe);
+        }
+
+        function updateTimelineMarker() {
+            const position = (currentTime / duration) * 100;
+            timelineMarker.style.left = `${position}%`;
+        }
+
+        function updateTimeDisplay() {
+            const current = formatTime(currentTime);
+            const total = formatTime(duration);
+            currentTimeDisplay.textContent = `${current} / ${total}`;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 100);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+        }
+
+        function formatLrcTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 100);
+            return `[${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(ms).padStart(2, '0')}]`;
+        }
+
+        function bindTimelineDrag() {
+            let isDragging = false;
+            timeline.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('keyframe')) return;
+                isDragging = true;
+                updatePositionFromMouse(e);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    updatePositionFromMouse(e);
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            timeline.addEventListener('click', (e) => {
+                if (e.target.classList.contains('keyframe') || isDragging) return;
+                updatePositionFromMouse(e);
+            });
+
+            function updatePositionFromMouse(e) {
+                const rect = timeline.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percent = x / rect.width;
+                const newTime = percent * duration;
+                currentTime = Math.max(0, Math.min(duration, newTime));
+                wavesurfer.seekTo(currentTime / duration);
+                updateTimelineMarker();
+                updateTimeDisplay();
+            }
+        }
+
+        function bindWaveformDrag() {
+
+        }
+
+        function scrollToLyricItem(lyricId) {
+            const lyricsList = document.getElementById('lyricsList');
+            const lyricItem = document.querySelector(`.lyric-item[data-id="${lyricId}"]`);
+            if (!lyricItem) return;
+            const listRect = lyricsList.getBoundingClientRect();
+            const itemRect = lyricItem.getBoundingClientRect();
+            const scrollOffset = lyricItem.offsetTop - (lyricsList.clientHeight / 2) + (itemRect.height / 2);
+            lyricsList.scrollTo({
+                top: scrollOffset,
+                behavior: 'smooth'
+            });
+        }
+
+        function bindWaveformZoom() {
+            waveformContainer.removeEventListener('wheel', handleWaveformZoom);
+            waveformContainer.addEventListener('wheel', handleWaveformZoom, { passive: false });
+        }
+
+        function handleWaveformZoom(e) {
+            if (!wavesurfer || !duration) return;
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 5 : -5;
+            currentZoomLevel = Math.max(1, Math.min(500, currentZoomLevel + delta));
+            wavesurfer.zoom(currentZoomLevel);
+            updateTimelineMarker();
+            document.querySelectorAll('.keyframe').forEach(keyframe => {
+                const time = parseFloat(keyframe.dataset.time);
+                const position = (time / duration) * 100;
+                keyframe.style.left = `${position}%`;
+            });
+        }
+
+        function highlightLyricItem(lyricId) {
+            if (currentHighlightedLyricId) {
+                const prevHighlighted = document.querySelector(`.lyric-item[data-id="${currentHighlightedLyricId}"]`);
+                const prevKeyframe = document.querySelector(`.keyframe[data-id="${currentHighlightedLyricId}"]`);
+                if (prevHighlighted) prevHighlighted.classList.remove('highlighted');
+                if (prevKeyframe) prevKeyframe.classList.remove('highlighted');
+            }
+            currentHighlightedLyricId = lyricId;
+            const lyricItem = document.querySelector(`.lyric-item[data-id="${lyricId}"]`);
+            const keyframe = document.querySelector(`.keyframe[data-id="${lyricId}"]`);
+            if (lyricItem) {
+                lyricItem.classList.add('highlighted');
+                scrollToLyricItem(lyricId);
+            }
+            if (keyframe) {
+                keyframe.classList.add('highlighted');
+            }
+        }
+
+        function addLyricKeyframe() {
+            if (currentTime < 0 || !duration) return;
+            const lyricId = `lyric-${lyricIdCounter++}`;
+            const newLyric = {
+                id: lyricId,
+                time: currentTime,
+                text: ''
+            };
+
+            lyrics.push(newLyric);
+            lyrics.sort((a, b) => a.time - b.time);
+            renderLyricsList();
+            addKeyframeToTimeline(currentTime, lyricId);
+            highlightLyricItem(lyricId);
+            if (wavesurfer) {
+                const waveformEl = document.getElementsByClassName('scroll');
+                const timePercent = currentTime / duration;
+                const waveformWidth = waveformEl.scrollWidth;
+                waveformContainer.scrollLeft = (waveformWidth * timePercent) - (waveformContainer.clientWidth / 2);
+            }
+            setTimeout(() => {
+                const newInput = document.querySelector(`.lyric-item[data-id="${lyricId}"] .lyric-input`);
+                if (newInput) {
+                    newInput.focus();
+                }
+            }, 100);
+        }
+
+        function renderLyricsList() {
+            lyricsList.innerHTML = '';
+
+            lyrics.forEach(lyric => {
+                const lyricItem = document.createElement('div');
+                lyricItem.className = `lyric-item ${lyric.id === currentHighlightedLyricId ? 'highlighted' : ''}`;
+                lyricItem.dataset.id = lyric.id;
+                const timeEl = document.createElement('div');
+                timeEl.className = 'lyric-time';
+                timeEl.textContent = formatTime(lyric.time);
+                timeEl.addEventListener('click', () => {
+                    wavesurfer.seekTo(lyric.time / duration);
+                    currentTime = lyric.time;
+                    updateTimelineMarker();
+                    updateTimeDisplay();
+                    highlightLyricItem(lyric.id);
+                    if (wavesurfer && duration) {
+                        const waveformEl = document.getElementById('waveform');
+                        const timePercent = lyric.time / duration;
+                        const waveformWidth = waveformEl.scrollWidth;
+                        waveformContainer.scrollLeft = (waveformWidth * timePercent) - (waveformContainer.clientWidth / 2);
+                    }
+                });
+                const textEl = document.createElement('div');
+                textEl.className = 'lyric-text';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'lyric-input';
+                input.value = lyric.text;
+                input.placeholder = '输入歌词...';
+                input.addEventListener('focus', () => {
+                    isInputFocused = true;
+                    highlightLyricItem(lyric.id);
+                });
+                input.addEventListener('blur', () => {
+                    isInputFocused = false;
+                });
+                input.addEventListener('input', (e) => {
+                    const index = lyrics.findIndex(l => l.id === lyric.id);
+                    if (index !== -1) {
+                        lyrics[index].text = e.target.value;
+                    }
+                });
+                textEl.appendChild(input);
+                const actionsEl = document.createElement('div');
+                actionsEl.className = 'lyric-actions';
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'action-btn';
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.title = '删除';
+                deleteBtn.addEventListener('click', () => {
+                    if (lyric.id === currentHighlightedLyricId) {
+                        currentHighlightedLyricId = null;
+                    }
+                    lyrics = lyrics.filter(l => l.id !== lyric.id);
+                    document.querySelector(`.keyframe[data-id="${lyric.id}"]`)?.remove();
+                    renderLyricsList();
+                });
+                actionsEl.appendChild(deleteBtn);
+                lyricItem.appendChild(timeEl);
+                lyricItem.appendChild(textEl);
+                lyricItem.appendChild(actionsEl);
+                lyricsList.appendChild(lyricItem);
+            });
+        }
+
+        function exportLRC() {
+            if (lyrics.length === 0) {
+                alert('暂无歌词可导出！');
+                return;
+            }
+            let lrcContent = '';
+            lyrics.forEach(lyric => {
+                if (lyric.text.trim()) {
+                    lrcContent += `${formatLrcTime(lyric.time)}${lyric.text}\n`;
+                }
+            });
+            const blob = new Blob([lrcContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            let fileName = 'lyrics.lrc';
+            if (audioFileInput.files[0]) {
+                const audioName = audioFileInput.files[0].name.replace(/\.[^/.]+$/, "");
+                fileName = `${audioName}.lrc`;
+            }
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function bindGlobalHotkeys() {
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    if (isInputFocused) {
+                        return;
+                    } else {
+                        e.preventDefault();
+                        if (wavesurfer) {
+                            togglePlayPause();
+                        }
+                    }
+                }
+                if (e.code === 'Tab') {
+                    if (!isInputFocused && addKeyframeBtn && !addKeyframeBtn.disabled) {
+                        e.preventDefault();
+                        addLyricKeyframe();
+                    }
+                }
+            }, { capture: true });
+        }
+
+        function togglePlayPause() {
+            if (!wavesurfer) return;
+
+            if (isPlaying) {
+                wavesurfer.pause();
+            } else {
+                wavesurfer.play();
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function initEventListeners() {
+            audioFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    initWaveSurfer();
+                    wavesurfer.load(url);
+                    isPlaying = false;
+                    currentTime = 0;
+                    duration = 0;
+                    lyrics = [];
+                    lyricIdCounter = 0;
+                    isInputFocused = false;
+                    currentHighlightedLyricId = null;
+                    renderLyricsList();
+                    document.querySelectorAll('.keyframe').forEach(el => el.remove());
+                    bindWaveformZoom();
+                    bindWaveformDrag();
+                }
+            });
+            playBtn.addEventListener('click', togglePlayPause);
+            addKeyframeBtn.addEventListener('click', addLyricKeyframe);
+            exportBtn.addEventListener('click', exportLRC);
+            bindWaveformZoom();
+            bindWaveformDrag();
+        }
+
+        function init() {
+            initEventListeners();
+            bindGlobalHotkeys();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>
