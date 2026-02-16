@@ -1,0 +1,237 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+@font-face {
+	font-family: 'FZYaSong';
+	src: url('SourceHanSansSC.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+html {
+	opacity: 1;
+	transition: opacity 0.2s ease;
+}
+
+/* 全局透明背景 */
+body {
+	background-color: transparent !important;
+}
+
+.spine-player {
+	background-color: transparent !important;
+	border: none !important;
+}
+
+.spine-player-canvas {
+	background-color: transparent !important;
+}
+
+/* 隐藏播放器默认控件 */
+.spine-player-controls {
+	display: none !important;
+}
+
+#player-container {
+	width: 100%;
+	height: 100%;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+#Hamood {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	max-width: 800px;
+	max-height: 800px;
+	width: 100%;
+	height: 100%;
+	transition: opacity 0.2s ease;
+	letter-spacing: 2px;
+}
+
+.Hamood::after {
+	align-items: center;
+	justify-content: center;
+	white-space: nowrap;
+	width: 100%;
+	position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: 45%;
+	font-size: clamp(10px, 6vw, 25px);
+	text-align: center;
+	font-family: FZYaSong;
+}
+
+.Hamood.loading::after {
+	content: "正在加载";
+	background: linear-gradient(90deg,
+			#ffffff 0%,
+			#00c8d6 30%,
+			#e00000 50%,
+			#00c8d6 70%,
+			#ffffff 100%);
+	background-size: 300% 100%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	background-position: -300% 0;
+	animation: shimmer 3s infinite ease-in-out;
+}
+
+.Hamood.error::after {
+	content: "加载错误";
+	color: #ff0000;
+	animation: error-shimmer 0.2s infinite ease-in-out;
+}
+
+#Hamoodgif {
+	position: absolute;
+    top: 50%;
+    left: 50%;
+	transform: translate(-50%, -50%);
+	width: 85%;
+	display: block;
+	object-fit: cover;
+	margin: auto;
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 300% 0;
+	}
+
+	100% {
+		background-position: -300% 0;
+	}
+}
+
+@keyframes error-shimmer {
+	0% {
+		color: #ff0000;
+	}
+
+	50% {
+		color: #ffffff;
+	}
+
+	100% {
+		color: #ff0000;
+	}
+}
+
+
+
+.outline {
+	border: solid 0px rgba(255, 0, 0, 0);
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	pointer-events: none;
+	transition: border 0.2s ease;
+}
+
+.outline.active {
+	border: solid 4px rgba(255, 0, 0, 0.5);
+}
+
+.outline::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	pointer-events: none;
+	z-index: -99;
+	padding: 4px;
+	transition: background-color 0.3s ease;
+	background-color: rgba(0, 255, 0, 0);
+}
+
+.outline.active::after {
+	content: "";
+	background-color: rgba(0, 255, 0, 0.2);
+}
+
+:root {
+	--lo: 0;
+	--li: 0;
+  }
+
+#lyrics {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: center center;
+    font-size: clamp(5px, 4vw, 40px);
+	font-family: FZYaSong;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+    text-shadow: 
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000,
+        0 0 5px rgba(0,0,0,0.8);
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 80vw;
+    max-width: fit-content;
+    box-sizing: border-box;
+	transition: opacity 0.1s ease-in-out;
+}
+
+#lyrics.vis {
+	opacity: var(--lo);
+}
+
+#lyrics.active {
+	opacity: var(--li);
+	min-width: 80vw;
+    background-color: rgba(0, 0, 255, 0.5);
+}
+
+#lyrics.active::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 0.5px;
+    background-color: red;
+    z-index: 1;
+    transform: translateY(-50%);
+}
+
+#lyrics.active::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 0.5px;
+    background-color: red;
+    z-index: 1;
+    transform: translateX(-50%);
+}
